@@ -4,7 +4,8 @@ var Todo = mongoose.model('Todo',{
   text: {
     type:String, 
     minlength:1,
-    trim:true
+    trim:true,
+    required:true
   },
   completed: {
     type:Boolean,
