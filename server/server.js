@@ -1,5 +1,6 @@
 var express=require('express');
 var bodyParser=require('body-parser');
+const {ObjectID}  = require('mongodb');
 
 var {mongoose} = require('./db/mongoose');  //destructured calling format
 var {Todo} = require('./models/todo');
@@ -30,6 +31,22 @@ app.get('/todos', (req, res) => {
     res.status(400).send(e);
     console.log('problemo')
   })
+})
+
+app.get('/todos/:id', (req, res)=> {
+  if (!ObjectID.isValid(req.params.id)) { return res.status(404).send();}
+ 
+  Todo.find({_id:req.params.id}).then((todos) => {
+    if (todos.length>0) {
+      res.send({todos})
+    } else {
+      res.status(404).send('None found');
+    }
+  }, (e) => {
+    res.status(400).send();
+    console.log('problemo')
+  })
+  
 })
 
 app.listen(3000, () => {
