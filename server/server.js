@@ -1,8 +1,10 @@
-var express=require('express');
-var bodyParser=require('body-parser');
+const _ = require('lodash');
+
+const express=require('express');
+const bodyParser=require('body-parser');
 const {ObjectID}  = require('mongodb');
 
-var {mongoose} = require('./db/mongoose');  //destructured calling format
+const {mongoose} = require('./db/mongoose');  //destructured calling format
 var {Todo} = require('./models/todo');
 var {User} = require('./models/user');
 
@@ -35,6 +37,33 @@ app.get('/todos', (req, res) => {
   })
 })
 
+app.patch('/todos/:id', (req, res) => {
+  var id= req.params.id;
+  var body = _.pick(req.body, ['text', 'completed']);   // a subset of what user sent us
+    
+  if (!ObjectID.isValid(req.params.id)) { return res.status(404).send();}
+  //check completed value and set completedAt
+
+  if (_.isBoolean(body.completed) && body.completed) {
+    body.completedAt = new Date().getTime();    // rtn javascript timestamp.  ms since 1970
+  } else {
+    body.completed = false;
+    body.completedAt = null;
+  }
+
+  Todo.findByIdAndUpdate(id, {$set:body}, {new:true}).then((todo)=> { //return the new update
+    if (!todo) {
+      return res.status(404).send();
+    }
+    // so we're cool if we reach here....
+    res.send(todo);
+
+  }).catch((e) => {
+    res.status(400).send();
+  });
+
+})
+
 app.get('/todos/:id', (req, res)=> {
   if (!ObjectID.isValid(req.params.id)) { return res.status(404).send();}
  
@@ -65,6 +94,18 @@ app.delete('/todos/:id', (req, res) => {
     res.status(404).send();
   }).catch((e) => {
     res.status(400).send();  //any other executional problem
+  });
+});
+
+app.post('/users', (req, res)=> {
+  var _body = _.pick(req.body, ['email','password'])
+
+  var user= new User(_body);
+
+  user.save().then((u) => {
+    res.send(u);
+  }).catch((e) => {
+    res.status(400).send(e);
   });
 });
 
